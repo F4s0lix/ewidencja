@@ -61,7 +61,7 @@ class ExcelHandler:
             sheet.cell(1, 1).fill = self.CELL_COLOR
             #stan_form = stan_form.removesuffix('+')
             sheet.cell(1, 2, stan_form)
-            sheet.cell(1, 3, 'usun "+" z komorki obok, zeby zaczelo dzialac')
+            sheet.cell(1, 3, 'jezeli nie dziala - usunac i dodac jakikolwiek znak, zeby sie przeformatowalo')
 
     def get_previos_output_length(self, sheet_name: str) -> int:
         if os.path.exists(self.output_path):
@@ -69,6 +69,17 @@ class ExcelHandler:
             print(excel_df)
             return len(excel_df['description'])
         return 0
+
+    def rewrite_STAN_formula(self) -> None:
+        with pd.ExcelWriter(self.output_path, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            list_with_sheet_names = [sheet for sheet in writer.sheets]
+            list_with_sheet_names.remove('STAN')
+
+            stan_form = '=0'
+            for sheet in list_with_sheet_names:
+                stan_form += f"+'{sheet}'.D2"
+            writer.sheets['STAN'].cell(1, 2, stan_form)
+
 
     def write_data_to_one_excel_file(self) -> None:
         month = input('Podaj miesiac, ktorego dotyczy wyciag: ')
@@ -91,13 +102,10 @@ class ExcelHandler:
                 sheet.cell(2, 4, f'=SUM(B2:B{current_data_length})')
                 csv_df.to_excel(writer, sheet_name=csv_filename, index=False, header=False, startrow=previous_data_length+2)
         
-                
-
-
-
 if __name__ == '__main__':
     #filepath = input('filename: ')
     test = ExcelHandler()
-    test.get_data_to_csv_files()
+    #test.get_data_to_csv_files()
     test.create_excel_file()
-    test.write_data_to_one_excel_file()
+    test.rewrite_STAN_formula()
+    #test.write_data_to_one_excel_file()
